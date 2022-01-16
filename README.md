@@ -101,15 +101,17 @@ echo "//////////FORMATTING//////////"
     lsblk
     echo "WARNING: IN THIS SECTION YOU NEED TO TYPE YOUR PARTITION ALL EXPLICITLY. PLEASE BE CAREFUL NOT TO MAKE ANY ERRORS."
 
-    read -r -p "Type your EFI Partition (ex: sda1): " efipart
+    read -r -p "Type your EFI Partition to format. If yo don't want to format it, please enter \"skip\". (case-sensitive, ex: sda1): " efipart
 
-    if [ "$efipart" == "" ]; then
+    if [ "$efipart" == "skip" ]; then
+	    read -r -p "Type your EFI Partition. This for configuring bootloader later, not for formatting. (case-sensitive, ex: sda1): " efipart
+    elif [ "$efipart" == "" ]; then
         echo "Please answer the question correctly."
     else
         mkfs.vfat -F32 /dev/"$efipart"
     fi
 
-    read -r -p "Type your SWAP Partition. If you don't have it, please enter \"skip\" (case-sensitive, ex: sda2): " swappart
+    read -r -p "Type your SWAP Partition. If you don't have it, please enter \"skip\". (case-sensitive, ex: sda2): " swappart
 
     if [ "$swappart" == "skip" ]; then
       echo ""
@@ -120,7 +122,7 @@ echo "//////////FORMATTING//////////"
         swapon /dev/"$swappart"
     fi
 
-    read -r -p "Type your ROOT Partition (ex: sda3): " rootpart
+    read -r -p "Type your ROOT Partition ro format (case-sensitive, ex: sda3): " rootpart
 
     if [ "$rootpart" == "" ]; then
         echo "Please answer the question corretly."
@@ -218,13 +220,14 @@ echo ""
 clear
 
 echo "As you know, you need to remember your Username, Password, and the root's password. Be sure to remember what you have entered right now!"
+echo "Local time configuration will be set to Asia/Seoul for initial settings. Change the settings after reboot if you want."
 echo "User configuration setup will start in 10 seconds."
 sleep 10
 
 clear
 
 arch-chroot /mnt bash -c "echo \"root:$rootpwd\" | chpasswd;
-                          echo \"$locconfig.UTF-8 UTF-8\" > /etc/locale.gen; locale-gen;
+                          echo \"$locconfig.UTF-8 UTF-8\" > /etc/locale.gen; locale-gen; echo \"LANG=$locconfig.UTF-8\" > /etc/locale.conf;
                           echo \"$host\" > /etc/hostname;
                           ln -sf /usr/share/zoneinfo/Asia/Seoul /etc/localtime;
                           useradd -m -g users -G wheel -s /bin/bash \"$username\";
@@ -236,16 +239,15 @@ arch-chroot /mnt bash -c "echo \"root:$rootpwd\" | chpasswd;
 clear
 
 echo "Installation has successfully finished!"
-echo "If you press any key the computer will be rebooted."
 echo "Thank you for using my sciprt!"
 echo "-Hyeon"
 echo ""
-read -n 1 -s -r -p "(Press any key to reboot.)"
+read -r -p "Do you want to reboot? (y/n): " yn
 
-read
-
-# So Long, and Thanks for all the fish.
-echo "So Long, and Thanks for all the fish."
-umount -lR /mnt
-reboot
+case $yn in
+            # So Long, and Thanks for all the fish.
+            [Yy]* ) reboot;; echo "So Long, and Thanks for all the fish."; umount -lR /mnt; reboot;;
+            [Nn]* ) echo "Exiting..."; exit;;
+            * ) echo "Exiting..."; exit;;
+esac
 ```
